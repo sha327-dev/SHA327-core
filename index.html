@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-327 Core</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f7fa; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2d3748; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px 30px; background: #6b46c1; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #805ad5; }
+        #result { margin-top: 20px; padding: 16px; background: #f7fafc; border-radius: 8px; word-break: break-all; font-family: monospace; min-height: 50px; border: 1px dashed #cbd5e0; }
+        .row { display: flex; gap: 12px; margin: 12px 0; }
+        .row > * { flex: 1; }
+        @media (max-width: 500px) { .row { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 SHA-327 Core</h1>
+    <p style="color:#718096;">Pure 327-bit hash engine — no extras</p>
+
+    <input type="text" id="inputData" placeholder="Enter text..." value="Hello World">
+
+    <div class="row">
+        <input type="text" id="salt" placeholder="Salt (optional)">
+        <input type="text" id="pepper" placeholder="Pepper (optional)">
+    </div>
+
+    <div class="row">
+        <select id="output">
+            <option value="hex">Hex (82 chars)</option>
+            <option value="base64">Base64 (55 chars)</option>
+            <option value="binary">Binary (41 bytes)</option>
+        </select>
+        <input type="number" id="workFactor" placeholder="Work factor" value="0" min="0" max="10000">
+    </div>
+
+    <button onclick="generate()">⚡ Generate SHA-327</button>
+    <div id="result">Hash will appear here</div>
+</div>
+
+<script>
+async function generate() {
+    const text = document.getElementById('inputData').value || 'Hello World';
+    const salt = document.getElementById('salt').value || null;
+    const pepper = document.getElementById('pepper').value || null;
+    const output = document.getElementById('output').value;
+    const work = parseInt(document.getElementById('workFactor').value) || 0;
+
+    const resultEl = document.getElementById('result');
+    resultEl.innerText = '⏳ Processing...';
+
+    try {
+        const res = await fetch('SHA327.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, salt, pepper, output, work_factor: work })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            resultEl.innerText = data.result.hash;
+            resultEl.style.borderColor = '#48bb78';
+        } else {
+            resultEl.innerText = '❌ ' + (data.error || 'Unknown error');
+            resultEl.style.borderColor = '#fc8181';
+        }
+    } catch (e) {
+        resultEl.innerText = '❌ ' + e.message;
+        resultEl.style.borderColor = '#fc8181';
+    }
+}
+
+document.getElementById('inputData').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
